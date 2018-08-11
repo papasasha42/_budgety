@@ -62,6 +62,23 @@ var model = (function () {
       return newItem;
     },
 
+    deleteItem: function (type, id) {
+      var dbPointer = data.allItems[type];
+
+      // take ids of all items to separate array
+      var ids = dbPointer.map(function (el) {
+        return el.id;
+      });
+
+      // find index of item to delete
+      var index = ids.indexOf(id);
+
+      // delete item if found
+      if (index !== -1) {
+        dbPointer.splice(index, 1);
+      }
+    },
+
     calculateBudget: function () {
       // calculate total income and expenses
       calculateTotal('expense');
@@ -94,7 +111,6 @@ var model = (function () {
       console.table(data.totals);
       console.log(data.budget);
       console.log(data.percentage);
-      console.log(data.totals.expense / data.totals.income);
     }
   };
 })();
@@ -112,7 +128,8 @@ var view = (function () {
     budgetLabel: '.budget__value',
     incomeLabel: '.budget__income--value',
     expensesLabel: '.budget__expenses--value',
-    percentageLabel: '.budget__expenses--percentage'
+    percentageLabel: '.budget__expenses--percentage',
+    container: '.container'
   };
 
   // public interface
@@ -155,6 +172,11 @@ var view = (function () {
       document.querySelector(container).insertAdjacentHTML('beforeend', newHTML);
     },
 
+    deleteListItem: function (id) {
+      var el = document.getElementById(id);
+      el.parentNode.removeChild(el);
+    },
+
     // clear input fields
     clearFields: function () {
       document.querySelector(domStrings.inputDescription).value = '';
@@ -190,6 +212,9 @@ var controller = (function (model, view) {
     document.addEventListener('keypress', function (event) {
       if (event.keyCode === 13 || event.which === 13) addItem();
     });
+
+    // add listeners to item delete buttons which is delegated to parent
+    document.querySelector(domStrings.container).addEventListener('click', deleteItem);
   };
 
   var updateBudget = function () {
@@ -226,6 +251,28 @@ var controller = (function (model, view) {
     }
   };
 
+  var deleteItem = function (event) {
+    // as target is button, find parent which contains item ID
+    var itemID = event.target.parentNode.parentNode.parentNode.parentNode.id;
+    var splitID, type, id;
+
+    // if ID exists delete it
+    if (itemID) {
+      // HTML id is formatted as type-ID (income-0), so need to parse it
+      splitID = itemID.split('-');
+      type = splitID[0];
+      id = parseInt(splitID[1]);
+
+      // Delete item from DB
+      model.deleteItem(type, id);
+
+      // Delete item from view
+      view.deleteListItem(itemID);
+
+      // Update and display budget
+      updateBudget();
+    }
+  };
   // public interface, actually there is only initializer
   return {
     init: function () {
