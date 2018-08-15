@@ -1,11 +1,19 @@
 // Data operations
 var model = (function () {
   // factory functions
-  var Expence = function (id, description, value) {
+  var Expense = function (id, description, value) {
     this.id = id;
     this.description = description;
     this.value = value;
+    this.percentage = -1;
   };
+
+  Expense.prototype.calculatePercentage = function (totalIncome) {
+    this.percentage = Math.round((this.value / totalIncome) * 100);
+  };
+
+  Expense.prototype.getPercentage = function () { return this.percentage; };
+
   var Income = function (id, description, value) {
     this.id = id;
     this.description = description;
@@ -50,7 +58,7 @@ var model = (function () {
       // choose constructor according to selected type
       var newItem;
       if (type === 'expense') {
-        newItem = new Expence(ID, description, value);
+        newItem = new Expense(ID, description, value);
       } else if (type === 'income') {
         newItem = new Income(ID, description, value);
       }
@@ -95,6 +103,19 @@ var model = (function () {
       }
     },
 
+    calculatePercentages: function () {
+      data.allItems.expense.forEach(function (el) {
+        el.calculatePercentage(data.totals.income);
+      });
+    },
+
+    getPercentages: function () {
+      var allPercentages = data.allItems.expense.map(function (el) {
+        return el.getPercentage();
+      });
+      return allPercentages;
+    },
+
     getBudget: function () {
       return {
         budget: data.budget,
@@ -129,7 +150,8 @@ var view = (function () {
     incomeLabel: '.budget__income--value',
     expensesLabel: '.budget__expenses--value',
     percentageLabel: '.budget__expenses--percentage',
-    container: '.container'
+    container: '.container',
+    expensesPercentageLabel: '.item__percentage'
   };
 
   // public interface
@@ -160,7 +182,7 @@ var view = (function () {
       } else if (type === 'expense') {
         container = domStrings.expensesContainer;
 
-        html = '<div class="item clearfix" id="expense-%id%"> <div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
+        html = '<div class="item clearfix" id="expense-%id%"> <div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
       }
 
       // replace placeholders with user input data
@@ -194,6 +216,27 @@ var view = (function () {
       } else {
         document.querySelector(domStrings.percentageLabel).textContent = '---';
       }
+    },
+
+    displayPercentages: function (percentages) {
+      var nodeList = document.querySelectorAll(domStrings.expensesPercentageLabel);
+      console.log(nodeList[0]);
+
+      // Modern JS has forEach in NodeList prototype, but I decided it will be good for training to follow instructor and code own implementation of such method
+
+      var nlForEach = function (list, callback) {
+        for (var i = 0; i < list.length; i++) {
+          callback(list[i], i, list);
+        }
+      };
+
+      nlForEach(nodeList, function (el, index) {
+        if (percentages[index] > 0) {
+          el.textContent = percentages[index] + '%';
+        } else {
+          el.textContent = '---';
+        }
+      });
     }
   };
 })();
@@ -228,10 +271,22 @@ var controller = (function (model, view) {
     view.displayBudget(budget);
   };
 
+  var updatePercentages = function () {
+    // Calculate percentages
+    model.calculatePercentages();
+
+    // Read from model
+    var percentages = model.getPercentages();
+
+    // Update model with the updated percentages
+    view.displayPercentages(percentages);
+  };
+
   var addItem = function () {
     // 1. Get input fields
     var input = view.getInput();
 
+    // Validate input form
     if (input.description && !isNaN(input.value) && input.value > 0) {
       // 2. Add item to model
       var newItem = model.addItem(input.type, input.description, input.value);
@@ -243,11 +298,8 @@ var controller = (function (model, view) {
       // 4. Calculate updated budget and display it
       updateBudget();
 
-      // debug
-      console.log(`New ${input.type} created: ${input.value} - ${input.description}`);
-    } else {
-      // debug
-      console.log('Input didnt pass checks!');
+      // 5. Calculate and display percentages
+      updatePercentages();
     }
   };
 
@@ -271,8 +323,12 @@ var controller = (function (model, view) {
 
       // Update and display budget
       updateBudget();
+
+      // Calculate and display percentages
+      updatePercentages();
     }
   };
+
   // public interface, actually there is only initializer
   return {
     init: function () {
