@@ -155,7 +155,8 @@ var view = (function () {
     expensesLabel: '.budget__expenses--value',
     percentageLabel: '.budget__expenses--percentage',
     container: '.container',
-    expensesPercentageLabel: '.item__percentage'
+    expensesPercentageLabel: '.item__percentage',
+    dateLabel: '.budget__title--month'
   };
 
   // +/- before, round to 2 decimal, separate thousands with comma
@@ -256,6 +257,15 @@ var view = (function () {
           el.textContent = '---';
         }
       });
+    },
+
+    displayDate: function () {
+      var now = new Date();
+      var year = now.getFullYear();
+
+      var months = [ 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December' ];
+      var month = months[now.getMonth()];
+      document.querySelector(domStrings.dateLabel).textContent = month + ' ' + year;
     }
   };
 })();
@@ -352,6 +362,7 @@ var controller = (function (model, view) {
   return {
     init: function () {
       console.log('Application started');
+      view.displayDate();
       view.displayBudget({
         budget: 0,
         totalInc: 0,
