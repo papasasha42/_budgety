@@ -266,6 +266,20 @@ var view = (function () {
       var months = [ 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December' ];
       var month = months[now.getMonth()];
       document.querySelector(domStrings.dateLabel).textContent = month + ' ' + year;
+    },
+
+    changedType: function () {
+      var nodeList = document.querySelectorAll(
+        domStrings.inputType + ',' +
+        domStrings.inputDescription + ',' +
+        domStrings.inputValue
+      );
+
+      nodeList.forEach(function (el) {
+        el.classList.toggle('red-focus');
+      });
+
+      document.querySelector(domStrings.addBtn).classList.toggle('red');
     }
   };
 })();
@@ -287,6 +301,9 @@ var controller = (function (model, view) {
 
     // add listeners to item delete buttons which is delegated to parent
     document.querySelector(domStrings.container).addEventListener('click', deleteItem);
+
+    // change color of inputs according to type
+    document.querySelector(domStrings.inputType).addEventListener('change', view.changedType);
   };
 
   var updateBudget = function () {
