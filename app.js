@@ -54,17 +54,17 @@ var model = (function () {
       var arr = data.allItems[type];
 
       // create ID which is +1 from ID of last existing element
-      var ID = 0;
+      var id = 0;
       if (arr.length > 0) {
-        var ID = arr[arr.length - 1].id + 1;
+        id = arr[arr.length - 1].id + 1;
       }
 
       // choose constructor according to selected type
       var newItem;
       if (type === 'expense') {
-        newItem = new Expense(ID, description, value);
+        newItem = new Expense(id, description, value);
       } else if (type === 'income') {
-        newItem = new Income(ID, description, value);
+        newItem = new Income(id, description, value);
       }
 
       // add new item to DB
